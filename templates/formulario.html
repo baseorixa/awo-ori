@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Relatório Diário - Portal Awó Orí{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Introspective & Minimalist Theme Customizations */
+    .minimal-input {
+        background-color: rgba(18, 18, 24, 0.6);
+        border: 1px solid rgba(63, 63, 70, 0.4);
+        border-radius: 6px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .minimal-input:focus {
+        border-color: rgba(223, 183, 108, 0.6);
+        background-color: rgba(18, 18, 24, 0.9);
+        box-shadow: 0 0 0 1px rgba(223, 183, 108, 0.2);
+        outline: none;
+    }
+    
+    .mood-btn {
+        background-color: rgba(24, 24, 27, 0.6);
+        border: 1px solid rgba(63, 63, 70, 0.3);
+        transition: all 0.25s ease;
+    }
+    .mood-btn.active {
+        background-color: rgba(223, 183, 108, 0.1);
+        border-color: #dfb76c;
+        color: #dfb76c;
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-4">
+
+    <!-- Breadcrumb back link -->
+    <div class="mb-8 flex items-center justify-between">
+        <a href="{{ url_for('index') }}" class="text-[11px] font-semibold text-zinc-500 hover:text-mystic-gold uppercase tracking-widest flex items-center gap-2 transition-colors">
+            <i class="fa-solid fa-chevron-left text-[9px]"></i> Voltar ao Templo
+        </a>
+        <span class="text-[10px] text-zinc-600 font-cinzel tracking-widest uppercase">Introspecção & Silêncio</span>
+    </div>
+
+    <!-- Minimal Header Card -->
+    <div class="mb-10 text-center space-y-2">
+        <h2 class="text-3xl font-cinzel font-light tracking-[0.2em] text-zinc-100">DIÁRIO RITUAL</h2>
+        <p class="text-[10px] uppercase tracking-[0.3em] text-mystic-gold font-medium">Consagração das Práticas Diárias</p>
+        <div class="w-12 h-[1px] bg-mystic-gold/40 mx-auto mt-4"></div>
+    </div>
+
+    <!-- Main Minimalist Form -->
+    <form action="{{ url_for('enviar_rotina') }}" method="POST" class="space-y-12">
+        
+        <!-- SECTION 1: HEADER (IDENTIFICATION & DATE) -->
+        <div class="bg-zinc-900/30 border border-zinc-800/40 p-6 md:p-8 rounded-xl space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Aluno -->
+                <div class="space-y-2">
+                    <label for="nome_aluno" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Iniciado / Aluno *</label>
+                    <input type="text" id="nome_aluno" name="nome_aluno" required 
+                           placeholder="Seu nome mágico ou civil"
+                           class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200 placeholder-zinc-700">
+                </div>
+                
+                <!-- Data (Auto populated to today but editable) -->
+                <div class="space-y-2">
+                    <label for="data" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Data Estelar *</label>
+                    <input type="date" id="data" name="data" required 
+                           value="{{ today }}"
+                           class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: MORNING PRACTICES -->
+        <div class="space-y-6">
+            <div class="flex items-center space-x-3 border-b border-zinc-800/60 pb-2">
+                <span class="text-zinc-600 text-xs font-cinzel">01 /</span>
+                <h3 class="text-xs font-cinzel uppercase tracking-[0.2em] text-mystic-gold font-semibold">Práticas Matutinas</h3>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Diário de Sonhos -->
+                <div class="space-y-2">
+                    <label for="diario_sonhos" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Diário dos Sonhos</label>
+                    <p class="text-[10px] text-zinc-600 italic">O reflexo do plano astral antes de tocar a matéria</p>
+                    <textarea id="diario_sonhos" name="diario_sonhos" rows="4" 
+                              placeholder="Quais foram as impressões, símbolos e mensagens do seu inconsciente?"
+                              class="w-full px-4 py-3 minimal-input text-sm text-zinc-200 placeholder-zinc-700"></textarea>
+                </div>
+                
+                <!-- Banimento Matutino -->
+                <div class="space-y-2">
+                    <label for="banimento_matutino" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Banimento Matutino</label>
+                    <p class="text-[10px] text-zinc-600 italic">Limpeza áurica e delimitação do espaço sagrado (Horário e notas)</p>
+                    <input type="text" id="banimento_matutino" name="banimento_matutino" 
+                           placeholder="Ex: 07:15 - Ritual Menor do Pentagrama, foco no quadrante Leste"
+                           class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200 placeholder-zinc-700">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: MONTHLY ASANA -->
+        <div class="space-y-6">
+            <div class="flex items-center space-x-3 border-b border-zinc-800/60 pb-2">
+                <span class="text-zinc-600 text-xs font-cinzel">02 /</span>
+                <h3 class="text-xs font-cinzel uppercase tracking-[0.2em] text-mystic-gold font-semibold">Prática Obrigatória do Mês: Asana</h3>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Asana Tempo -->
+                    <div class="md:col-span-1 space-y-2">
+                        <label for="asana_tempo" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Tempo de Imobilidade (min)</label>
+                        <p class="text-[10px] text-zinc-600 italic">Mínimo sugerido de 15 a 30 min</p>
+                        <div class="relative flex items-center">
+                            <input type="number" id="asana_tempo" name="asana_tempo" min="1" max="180" placeholder="20"
+                                   class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200 placeholder-zinc-700 pr-12">
+                            <span class="absolute right-4 text-xs text-zinc-600">min</span>
+                        </div>
+                    </div>
+
+                    <!-- Asana Impressões -->
+                    <div class="md:col-span-2 space-y-2">
+                        <label for="asana_impressoes" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Impressões da Imobilidade</label>
+                        <p class="text-[10px] text-zinc-600 italic">Postura adotada e reações da mente/corpo frente ao silêncio</p>
+                        <textarea id="asana_impressoes" name="asana_impressoes" rows="2" 
+                                  placeholder="Como lidou com o desconforto físico e as flutuações mentais?"
+                                  class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200 placeholder-zinc-700"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: NIGHT PRACTICES -->
+        <div class="space-y-6">
+            <div class="flex items-center space-x-3 border-b border-zinc-800/60 pb-2">
+                <span class="text-zinc-600 text-xs font-cinzel">03 /</span>
+                <h3 class="text-xs font-cinzel uppercase tracking-[0.2em] text-mystic-gold font-semibold">Práticas Noturnas</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Banimento Noturno -->
+                <div class="space-y-2">
+                    <label for="banimento_noturno" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Banimento Noturno</label>
+                    <p class="text-[10px] text-zinc-600 italic">Fechamento do templo mental antes do repouso físico</p>
+                    <input type="text" id="banimento_noturno" name="banimento_noturno" 
+                           placeholder="Ex: 23:00 - Fechamento áurico, banimento com sigilos lunares"
+                           class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200 placeholder-zinc-700">
+                </div>
+
+                <!-- Diário Mágico -->
+                <div class="space-y-2">
+                    <label for="diario_magico" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Diário Mágico</label>
+                    <p class="text-[10px] text-zinc-600 italic">Registro alquímico do dia, correspondências ou meditações reflexivas</p>
+                    <textarea id="diario_magico" name="diario_magico" rows="3" 
+                              placeholder="Anotações gerais sobre a egrégora do dia e rituais opcionais..."
+                              class="w-full px-4 py-3 minimal-input text-sm text-zinc-200 placeholder-zinc-700"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: EXTRA VARIABLES -->
+        <div class="space-y-6">
+            <div class="flex items-center space-x-3 border-b border-zinc-800/60 pb-2">
+                <span class="text-zinc-600 text-xs font-cinzel">04 /</span>
+                <h3 class="text-xs font-cinzel uppercase tracking-[0.2em] text-mystic-gold font-semibold">Variáveis Extras</h3>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Humor Selector (Icons) -->
+                <div class="space-y-3">
+                    <label class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Estado de Humor Predominante</label>
+                    
+                    <!-- Hidden field to send mood -->
+                    <input type="hidden" id="humor" name="humor" value="">
+                    
+                    <div class="grid grid-cols-5 gap-3 max-w-lg">
+                        <button type="button" onclick="selectMood('Meditativo', this)" 
+                                class="mood-btn py-3 px-2 rounded-lg text-center flex flex-col items-center justify-center gap-1.5 text-zinc-400 hover:text-zinc-200">
+                            <span class="text-lg">🧘</span>
+                            <span class="text-[9px] uppercase tracking-wider font-semibold">Meditativo</span>
+                        </button>
+                        
+                        <button type="button" onclick="selectMood('Enérgico', this)" 
+                                class="mood-btn py-3 px-2 rounded-lg text-center flex flex-col items-center justify-center gap-1.5 text-zinc-400 hover:text-zinc-200">
+                            <span class="text-lg">⚡</span>
+                            <span class="text-[9px] uppercase tracking-wider font-semibold">Enérgico</span>
+                        </button>
+                        
+                        <button type="button" onclick="selectMood('Introspectivo', this)" 
+                                class="mood-btn py-3 px-2 rounded-lg text-center flex flex-col items-center justify-center gap-1.5 text-zinc-400 hover:text-zinc-200">
+                            <span class="text-lg">🌑</span>
+                            <span class="text-[9px] uppercase tracking-wider font-semibold">Introspec.</span>
+                        </button>
+                        
+                        <button type="button" onclick="selectMood('Caótico', this)" 
+                                class="mood-btn py-3 px-2 rounded-lg text-center flex flex-col items-center justify-center gap-1.5 text-zinc-400 hover:text-zinc-200">
+                            <span class="text-lg">🌀</span>
+                            <span class="text-[9px] uppercase tracking-wider font-semibold">Caótico</span>
+                        </button>
+                        
+                        <button type="button" onclick="selectMood('Radiante', this)" 
+                                class="mood-btn py-3 px-2 rounded-lg text-center flex flex-col items-center justify-center gap-1.5 text-zinc-400 hover:text-zinc-200">
+                            <span class="text-lg">☀️</span>
+                            <span class="text-[9px] uppercase tracking-wider font-semibold">Radiante</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Insights -->
+                <div class="space-y-2">
+                    <label for="insights" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Insights & Epifanias do Dia</label>
+                    <p class="text-[10px] text-zinc-600 italic">Lampejos de sabedoria ou compreensões intuitivas</p>
+                    <textarea id="insights" name="insights" rows="3" 
+                              placeholder="Qual verdade se revelou ao seu orí nas últimas 24 horas?"
+                              class="w-full px-4 py-3 minimal-input text-sm text-zinc-200 placeholder-zinc-700"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Panel -->
+        <div class="pt-6 border-t border-zinc-800/60 flex items-center justify-end gap-4">
+            <a href="{{ url_for('index') }}" class="text-xs text-zinc-500 hover:text-zinc-300 font-semibold uppercase tracking-wider transition-colors">
+                Silenciar & Cancelar
+            </a>
+            <button type="submit" class="px-8 py-3 bg-zinc-100 text-zinc-950 font-bold uppercase tracking-wider text-[11px] rounded hover:bg-zinc-200 hover:text-black transition-all shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane text-[9px]"></i> Enviar Relatório Diário
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<!-- Helper script for mood selection -->
+<script>
+    function selectMood(moodValue, element) {
+        // Set the value of hidden field
+        document.getElementById('humor').value = moodValue;
+        
+        // Remove active class from all buttons
+        const buttons = document.querySelectorAll('.mood-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked button
+        element.classList.add('active');
+    }
+</script>
+{% endblock %}

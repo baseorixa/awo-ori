@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Meu Histórico - Portal Awó Orí{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    
+    <!-- Hero / Intro -->
+    <div class="text-center space-y-3 mb-8">
+        <span class="text-3xl text-mystic-gold mb-1 block"><i class="fa-solid fa-hourglass-half animate-spin-slow"></i></span>
+        <h2 class="text-2xl font-cinzel font-bold tracking-widest text-slate-100">Meu Histórico Iniciático</h2>
+        <p class="text-xs text-slate-500 uppercase tracking-wider">Acesse o registro de sua jornada pessoal no templo</p>
+        <div class="w-12 h-[1px] bg-mystic-gold/40 mx-auto mt-4"></div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="glass-card p-6 md:p-8 rounded-xl shadow-xl max-w-xl mx-auto border border-white/5">
+        <form method="GET" action="{{ url_for('meu_historico') }}" class="space-y-4">
+            <div class="space-y-2">
+                <label for="aluno" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Seu Nome Iniciático (Exato) *</label>
+                <p class="text-[10px] text-slate-500 italic mb-2">Por motivos de privacidade, digite seu nome exatamente como registrado para carregar o seu histórico.</p>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                        <i class="fa-solid fa-user-tag text-xs"></i>
+                    </span>
+                    <input type="text" id="aluno" name="aluno" required placeholder="Digite seu nome..." 
+                           value="{{ student_name or '' }}"
+                           class="w-full pl-9 pr-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                </div>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-mystic-gold text-space-950 font-bold uppercase tracking-wider text-xs rounded-lg hover:bg-mystic-goldHover transition-colors shadow-mystic-glow flex items-center justify-center gap-2">
+                <i class="fa-solid fa-magnifying-glass"></i> Carregar Meus Registros
+            </button>
+        </form>
+    </div>
+
+    <!-- Results Area -->
+    {% if search_performed %}
+        <div class="space-y-6">
+            <h3 class="text-lg font-cinzel font-semibold tracking-wider text-slate-300 border-b border-white/5 pb-2">
+                Registros encontrados para: <span class="text-mystic-gold">"{{ student_name }}"</span> ({{ registros|length }})
+            </h3>
+
+            {% if registros %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for r in registros %}
+                        <div class="glass-card rounded-xl overflow-hidden flex flex-col justify-between shadow-lg relative group border border-white/5">
+                            <div class="h-1 w-full bg-gradient-to-r from-mystic-gold/20 via-purple-500/20 to-mystic-gold/20"></div>
+                            
+                            <div class="p-6 space-y-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-200 font-cinzel tracking-wider">
+                                            {{ r.data.strftime('%d/%m/%Y') }}
+                                        </p>
+                                        <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">
+                                            Diário Consagrado
+                                        </p>
+                                    </div>
+                                    {% if r.fase_lua %}
+                                        <span class="px-2 py-0.5 text-[9px] font-semibold bg-purple-950/40 border border-purple-500/20 text-purple-300 rounded-md">
+                                            <i class="fa-solid fa-moon text-mystic-gold mr-1"></i>{{ r.fase_lua }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="text-xs text-slate-400 space-y-2 border-t border-white/5 pt-3">
+                                    {% if r.diario_sonhos %}
+                                        <div class="line-clamp-2 italic">
+                                            <span class="text-[9px] font-bold text-sky-400 uppercase tracking-wider block">Sonhos</span>
+                                            "{{ r.diario_sonhos }}"
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if r.asana_tempo %}
+                                        <div>
+                                            <span class="text-[9px] font-bold text-amber-500 uppercase tracking-wider block">Asana</span>
+                                            Tempo: {{ r.asana_tempo }} min
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Footer actions -->
+                            <div class="px-6 py-3 border-t border-white/5 bg-space-950/40 flex items-center justify-between">
+                                <!-- Secure view link passing student name verification parameter -->
+                                <a href="{{ url_for('visualizar_registro', id=r.id, aluno=r.nome_aluno) }}" 
+                                   class="text-xs font-semibold text-mystic-gold hover:text-mystic-goldHover transition-colors flex items-center gap-1">
+                                    <i class="fa-regular fa-eye text-[10px]"></i> Ver Diário Completo
+                                </a>
+                                <span class="text-[9px] text-slate-600 font-cinzel">PRIVADO</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="glass-card p-12 text-center rounded-xl border border-dashed border-white/10 max-w-md mx-auto">
+                    <span class="text-4xl text-slate-700 mb-3 block"><i class="fa-solid fa-feather"></i></span>
+                    <h4 class="font-cinzel text-sm font-bold tracking-wider text-slate-400 mb-1">Nenhum Registro</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed">
+                        Nenhum registro diário exato foi encontrado para o nome digitado. Certifique-se de que a ortografia esteja correta e que você usou letras maiúsculas/minúsculas adequadas.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

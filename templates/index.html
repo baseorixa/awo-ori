@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Portal Awó Orí{% endblock %}
+
+{% block content %}
+<div class="space-y-10">
+    
+    <!-- Hero / Intro -->
+    <div class="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-r from-space-900 to-indigo-950/40 p-8 md:p-10 shadow-2xl">
+        <div class="absolute right-0 top-0 -translate-y-8 translate-x-8 opacity-10 text-[180px] text-mystic-gold pointer-events-none">
+            <i class="fa-solid fa-eye"></i>
+        </div>
+        <div class="max-w-2xl">
+            <h2 class="text-3xl font-cinzel font-bold tracking-wider text-mystic-gold mb-3">Portal de Acompanhamento</h2>
+            <p class="text-slate-400 text-sm leading-relaxed">
+                Bem-vindo ao templo digital do curso <strong>Awó Orí</strong>. Este é o espaço consagrado para o registro das práticas diárias, sonhos, banimentos e insights. Acompanhe a jornada evolutiva da sua consciência passo a passo.
+            </p>
+        </div>
+    </div>
+
+    <!-- Stats Panel -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <!-- Stat Card 1 -->
+        <div class="glass-card p-6 rounded-xl flex items-center space-x-4 shadow-xl">
+            <div class="p-4 rounded-lg bg-mystic-gold/10 text-mystic-gold text-2xl">
+                <i class="fa-solid fa-book-open"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold">Registros Totais</p>
+                <h3 class="text-2xl font-bold font-cinzel text-slate-100 mt-1">{{ stats.total }}</h3>
+            </div>
+        </div>
+
+        <!-- Stat Card 2 -->
+        <div class="glass-card p-6 rounded-xl flex items-center space-x-4 shadow-xl">
+            <div class="p-4 rounded-lg bg-purple-500/10 text-purple-400 text-2xl">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold">Alunos Ativos</p>
+                <h3 class="text-2xl font-bold font-cinzel text-slate-100 mt-1">{{ stats.alunos }}</h3>
+            </div>
+        </div>
+
+        <!-- Stat Card 3 -->
+        <div class="glass-card p-6 rounded-xl flex items-center space-x-4 shadow-xl">
+            <div class="p-4 rounded-lg bg-sky-500/10 text-sky-400 text-2xl">
+                <i class="fa-solid fa-cloud-moon"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold">Sonhos Mapeados</p>
+                <h3 class="text-2xl font-bold font-cinzel text-slate-100 mt-1">{{ stats.sonhos }}</h3>
+            </div>
+        </div>
+
+        <!-- Stat Card 4 -->
+        <div class="glass-card p-6 rounded-xl flex items-center space-x-4 shadow-xl">
+            <div class="p-4 rounded-lg bg-amber-500/10 text-amber-500 text-2xl">
+                <i class="fa-solid fa-yin-yang"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold">Sessões Asana</p>
+                <h3 class="text-2xl font-bold font-cinzel text-slate-100 mt-1">{{ stats.asanas }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="glass-card p-6 rounded-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <form method="GET" action="{{ url_for('dashboard') }}" class="flex-grow flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div class="relative flex-grow max-w-md">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </div>
+                <input type="text" name="aluno" value="{{ current_filter }}" placeholder="Buscar por nome do aluno..." 
+                       class="w-full pl-9 pr-4 py-2 border border-white/5 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+            </div>
+            <button type="submit" class="px-5 py-2 bg-mystic-gold text-space-950 font-semibold text-sm rounded-lg hover:bg-mystic-goldHover transition-colors shadow-mystic-glow flex items-center justify-center gap-2">
+                <i class="fa-solid fa-filter"></i> Filtrar
+            </button>
+            {% if current_filter %}
+            <a href="{{ url_for('dashboard') }}" class="px-4 py-2 border border-white/10 text-slate-400 text-sm rounded-lg hover:bg-white/5 hover:text-slate-200 text-center transition-colors">
+                Limpar Filtro
+            </a>
+            {% endif %}
+        </form>
+
+        <!-- Dropdown shortcuts for known students -->
+        {% if unique_students %}
+        <div class="flex items-center space-x-2">
+            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Atalhos:</span>
+            <select onchange="if(this.value) { window.location.href = '{{ url_for('dashboard') }}?aluno=' + encodeURIComponent(this.value); }" 
+                    class="py-1.5 px-3 border border-white/5 rounded-lg bg-space-950/80 text-xs text-slate-300 focus:outline-none focus:border-mystic-gold/50">
+                <option value="">Filtrar Aluno...</option>
+                {% for student in unique_students %}
+                <option value="{{ student }}" {% if current_filter == student %}selected{% endif %}>{{ student }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Content List Grid -->
+    <div>
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-cinzel font-semibold tracking-wider text-slate-300 flex items-center gap-2">
+                <i class="fa-solid fa-feather text-mystic-gold text-sm"></i>
+                {% if current_filter %}
+                    Resultados para "{{ current_filter }}" ({{ registros|length }})
+                {% else %}
+                    Registros Recentes
+                {% endif %}
+            </h3>
+            <a href="{{ url_for('novo_registro') }}" class="text-xs text-mystic-gold hover:text-mystic-goldHover font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-plus text-[10px]"></i> Novo Diário
+            </a>
+        </div>
+
+        {% if registros %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for r in registros %}
+                    <div class="glass-card rounded-xl overflow-hidden flex flex-col justify-between shadow-lg relative group">
+                        
+                        <!-- Top Gradient bar -->
+                        <div class="h-1 w-full bg-gradient-to-r from-mystic-gold/20 via-purple-500/20 to-mystic-gold/20"></div>
+                        
+                        <div class="p-6 space-y-4 flex-grow">
+                            <!-- Card Header -->
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-semibold text-slate-200 group-hover:text-mystic-gold transition-colors font-cinzel text-base tracking-wide">{{ r.nome_aluno }}</h4>
+                                    <p class="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
+                                        <i class="fa-regular fa-calendar-check text-mystic-gold/70"></i> 
+                                        {{ r.data.strftime('%d/%m/%Y') }}
+                                    </p>
+                                </div>
+                                
+                                <!-- Lunar or optional metrics badge -->
+                                {% if r.metricas_opcionais %}
+                                    <span class="px-2 py-1 text-[9px] font-semibold bg-purple-950/40 border border-purple-500/20 text-purple-300 rounded-md uppercase tracking-wider">
+                                        {{ r.metricas_opcionais.split(',')|first }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Highlights Grid -->
+                            <div class="grid grid-cols-2 gap-2 py-2 border-y border-white/5 text-xs text-slate-400">
+                                <div>
+                                    <span class="block text-[9px] uppercase tracking-wider text-slate-600 font-bold mb-0.5">Banimento Matutino</span>
+                                    <span class="line-clamp-1 text-slate-300">
+                                        {% if r.banimento_matutino %}
+                                            <i class="fa-regular fa-sun text-amber-500/80 mr-1"></i>{{ r.banimento_matutino }}
+                                        {% else %}
+                                            <span class="text-slate-600 italic">Não realizado</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="block text-[9px] uppercase tracking-wider text-slate-600 font-bold mb-0.5">Banimento Noturno</span>
+                                    <span class="line-clamp-1 text-slate-300">
+                                        {% if r.banimento_noturno %}
+                                            <i class="fa-regular fa-moon text-indigo-400/80 mr-1"></i>{{ r.banimento_noturno }}
+                                        {% else %}
+                                            <span class="text-slate-600 italic">Não realizado</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Content Previews -->
+                            <div class="space-y-2">
+                                <!-- Dream Diary Preview -->
+                                {% if r.diario_sonhos %}
+                                    <div class="text-xs">
+                                        <span class="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Diário dos Sonhos</span>
+                                        <p class="text-slate-400 line-clamp-2 mt-0.5 italic leading-relaxed">"{{ r.diario_sonhos }}"</p>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Asana Preview -->
+                                {% if r.pratica_mes_asana %}
+                                    <div class="text-xs">
+                                        <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Prática Asana</span>
+                                        <p class="text-slate-400 line-clamp-1 mt-0.5 leading-relaxed">{{ r.pratica_mes_asana }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Card Action Footer -->
+                        <div class="px-6 py-4 border-t border-white/5 bg-space-950/40 flex items-center justify-between">
+                            <a href="{{ url_for('visualizar_registro', id=r.id) }}" class="text-xs font-semibold text-mystic-gold hover:text-mystic-goldHover transition-colors flex items-center gap-1">
+                                <i class="fa-regular fa-eye text-[10px]"></i> Detalhes
+                            </a>
+                            
+                            <div class="flex items-center space-x-3">
+                                <a href="{{ url_for('editar_registro', id=r.id) }}" class="text-slate-400 hover:text-mystic-gold transition-colors text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-pen-to-square text-[10px]"></i> Editar
+                                </a>
+                                
+                                <form action="{{ url_for('deletar_registro', id=r.id) }}" method="POST" 
+                                      onsubmit="return confirm('Deseja realmente apagar este registro consagrado de {{ r.nome_aluno }} do dia {{ r.data.strftime('%d/%m/%Y') }}?');" class="inline">
+                                    <button type="submit" class="text-slate-500 hover:text-rose-400 transition-colors text-xs flex items-center gap-1">
+                                        <i class="fa-regular fa-trash-can text-[10px]"></i> Deletar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="glass-card p-12 text-center rounded-xl shadow-xl max-w-xl mx-auto border border-dashed border-white/10">
+                <span class="text-5xl text-mystic-gold/20 mb-4 block"><i class="fa-solid fa-feather-pointed"></i></span>
+                <h4 class="font-cinzel text-lg font-bold tracking-wider text-slate-300 mb-2">Nenhum Registro Encontrado</h4>
+                <p class="text-slate-500 text-sm mb-6 leading-relaxed">
+                    Ainda não há registros nesta categoria ou para o aluno especificado. Que tal inaugurar este diário com um novo ritual?
+                </p>
+                <a href="{{ url_for('novo_registro') }}" class="inline-flex items-center px-5 py-2.5 bg-mystic-gold text-space-950 font-bold uppercase tracking-wider text-xs rounded-lg hover:bg-mystic-goldHover transition-colors shadow-mystic-glow">
+                    <i class="fa-solid fa-plus mr-2 text-[10px]"></i> Escrever Primeiro Registro
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

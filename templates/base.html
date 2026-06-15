@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal Awó Orí{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        space: {
+                            900: '#0b0c16',
+                            950: '#04050c',
+                        },
+                        mystic: {
+                            gold: '#dfb76c',
+                            goldHover: '#f2cf8d',
+                            purple: '#8b5cf6',
+                            darkPurple: '#4c1d95',
+                        }
+                    },
+                    boxShadow: {
+                        'mystic-glow': '0 0 15px rgba(223, 183, 108, 0.15)',
+                        'mystic-glow-strong': '0 0 25px rgba(139, 92, 246, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom animations & fine scrollbars */
+        .glass-card {
+            background: rgba(15, 17, 30, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(223, 183, 108, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 0 15px rgba(223, 183, 108, 0.05);
+        }
+        
+        .mystic-gradient-bg {
+            background: radial-gradient(circle at 50% 0%, rgba(76, 29, 149, 0.15) 0%, rgba(11, 12, 22, 0) 70%), 
+                        radial-gradient(circle at 0% 100%, rgba(223, 183, 108, 0.03) 0%, rgba(11, 12, 22, 0) 50%);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #04050c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(223, 183, 108, 0.2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(223, 183, 108, 0.4);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-space-950 text-slate-200 font-sans flex flex-col mystic-gradient-bg">
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-40 w-full border-b border-white/5 bg-space-950/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="{{ url_for('index') }}" class="flex items-center space-x-3 group">
+                    <span class="text-3xl text-mystic-gold animate-pulse"><i class="fa-solid fa-moon"></i></span>
+                    <div>
+                        <h1 class="text-xl font-cinzel font-semibold tracking-widest text-mystic-gold group-hover:text-mystic-goldHover transition-colors">AWÓ ORÍ</h1>
+                        <p class="text-[9px] uppercase tracking-[0.25em] text-slate-500 font-medium">Portal de Acompanhamento</p>
+                    </div>
+                </a>
+            </div>
+            
+            <nav class="flex items-center space-x-6">
+                {% if session.get('logged_in') %}
+                    <a href="{{ url_for('dashboard') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
+                        <i class="fa-solid fa-house mr-2"></i>Dashboard
+                    </a>
+                    <a href="{{ url_for('index') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
+                        <i class="fa-solid fa-feather mr-2"></i>Novo Registro
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="inline-flex items-center px-4 py-2 border border-rose-500/40 text-xs font-semibold uppercase tracking-wider rounded-lg text-rose-400 bg-rose-950/10 hover:bg-rose-950/20 hover:border-rose-400 transition-all duration-300">
+                        <i class="fa-solid fa-sign-out-alt mr-2"></i>Sair
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('index') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
+                        <i class="fa-solid fa-feather mr-2"></i>Novo Registro
+                    </a>
+                    <a href="{{ url_for('meu_historico') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
+                        <i class="fa-solid fa-hourglass-half mr-2"></i>Meu Histórico
+                    </a>
+                    <a href="{{ url_for('login_professor') }}" class="inline-flex items-center px-4 py-2 border border-mystic-gold/40 text-xs font-semibold uppercase tracking-wider rounded-lg text-mystic-gold bg-mystic-gold/10 hover:bg-mystic-gold/20 hover:border-mystic-gold transition-all duration-300 shadow-mystic-glow">
+                        <i class="fa-solid fa-user-shield mr-2"></i>Área do Professor
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-8 space-y-3">
+                    {% for category, message in messages %}
+                        <div class="p-4 rounded-xl flex items-start space-x-3 {% if category == 'error' %}bg-rose-950/30 border border-rose-500/20 text-rose-200{% else %}bg-emerald-950/30 border border-emerald-500/20 text-emerald-200{% endif %}">
+                            <span class="text-lg mt-0.5">
+                                {% if category == 'error' %}
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% endif %}
+                            </span>
+                            <div class="flex-1 text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-white/5 bg-space-950/40 py-6 text-center text-xs text-slate-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="font-cinzel tracking-widest text-slate-500 mb-1">AWÓ ORÍ • DIÁRIO ALQUÍMICO</p>
+            <p>© {{ today[:4] if today else '2026' }} - Desenvolvido para Acompanhamento Iniciático</p>
+        </div>
+    </footer>
+
+</body>
+</html>

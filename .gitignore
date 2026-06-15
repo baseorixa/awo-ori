@@ -1,0 +1,13 @@
+# Python virtual environment
+venv/
+
+# Caches & temporary files
+__pycache__/
+*.pyc
+.DS_Store
+
+# Local instance database
+instance/
+
+# Local configuration secrets
+.env

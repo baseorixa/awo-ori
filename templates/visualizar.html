@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro de {{ registro.nome_aluno }} ({{ registro.data.strftime('%d/%m/%Y') }}) - Portal Awó Orí{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Top Action Buttons / Breadcrumbs -->
+    <div class="flex items-center justify-between">
+        {% if session.get('logged_in') %}
+            <a href="{{ url_for('dashboard') }}" class="text-xs font-semibold text-slate-500 hover:text-mystic-gold uppercase tracking-wider flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Voltar para a Dashboard
+            </a>
+        {% else %}
+            <a href="{{ url_for('meu_historico', aluno=registro.nome_aluno) }}" class="text-xs font-semibold text-slate-500 hover:text-mystic-gold uppercase tracking-wider flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Voltar para o Meu Histórico
+            </a>
+        {% endif %}
+        
+        {% if session.get('logged_in') %}
+        <div class="flex items-center space-x-3">
+            <a href="{{ url_for('editar_registro', id=registro.id) }}" class="inline-flex items-center px-4 py-2 border border-white/10 text-xs font-semibold uppercase tracking-wider rounded-lg text-slate-300 bg-white/5 hover:bg-white/10 transition-all duration-300">
+                <i class="fa-solid fa-pen-to-square mr-2"></i>Editar Registro
+            </a>
+            
+            <form action="{{ url_for('deletar_registro', id=registro.id) }}" method="POST" 
+                  onsubmit="return confirm('Deseja realmente apagar definitivamente este registro consagrado?');" class="inline">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-rose-500/20 text-xs font-semibold uppercase tracking-wider rounded-lg text-rose-400 bg-rose-950/20 hover:bg-rose-950/40 hover:border-rose-500/40 transition-all duration-300">
+                    <i class="fa-regular fa-trash-can mr-2"></i>Excluir
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Grimoire Sheet Layout -->
+    <div class="glass-card rounded-2xl overflow-hidden shadow-2xl relative">
+        <!-- Celestial Starfield decorative background -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/20 via-transparent to-transparent pointer-events-none"></div>
+        <div class="absolute top-0 right-0 p-8 text-6xl text-mystic-gold/5 pointer-events-none">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+
+        <!-- Sheet Header -->
+        <div class="px-6 py-8 md:px-10 border-b border-white/5 text-center relative">
+            <span class="text-xs font-cinzel text-mystic-gold tracking-[0.25em] uppercase">Registro Consagrado</span>
+            <h2 class="text-3xl font-cinzel font-bold tracking-widest text-slate-100 mt-2">{{ registro.nome_aluno }}</h2>
+            <div class="flex items-center justify-center space-x-2 mt-3 text-slate-500 text-xs font-medium uppercase tracking-wider">
+                <i class="fa-regular fa-calendar-check text-mystic-gold/80"></i>
+                <span>{{ registro.data.strftime('%d de %B de %Y') }}</span>
+                {% if registro.metricas_opcionais %}
+                    <span class="text-slate-700">•</span>
+                    <span class="text-purple-400">{{ registro.metricas_opcionais }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sheet Body Details -->
+        <div class="p-6 md:p-10 space-y-10">
+
+            <!-- SECTION 1: SLEEP DIARY -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-cinzel font-bold uppercase tracking-[0.15em] text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                    <i class="fa-solid fa-moon text-sky-400/80"></i>
+                    Diário dos Sonhos (Plano Astral)
+                </h3>
+                {% if registro.diario_sonhos %}
+                    <div class="p-5 rounded-xl bg-space-900/60 border border-white/5 italic text-slate-300 text-sm leading-relaxed relative">
+                        <span class="absolute top-3 left-4 text-3xl text-white/5 font-serif pointer-events-none">“</span>
+                        <p class="pl-4 pr-2">{{ registro.diario_sonhos }}</p>
+                        <span class="absolute bottom-1 right-4 text-3xl text-white/5 font-serif pointer-events-none">”</span>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-slate-500 italic">Nenhum registro onírico foi anotado para esta noite.</p>
+                {% endif %}
+            </div>
+
+            <!-- SECTION 2: RITUALISTIC RITES -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Morning Banishing -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-cinzel font-bold uppercase tracking-[0.15em] text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                        <i class="fa-solid fa-sun text-amber-500/80"></i>
+                        Banimento Matutino
+                    </h3>
+                    {% if registro.banimento_matutino %}
+                        <div class="p-4 rounded-xl bg-space-900/40 border border-white/5 text-sm text-slate-300">
+                            {{ registro.banimento_matutino }}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-slate-500 italic">Prática de banimento matutino não registrada.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Night Banishing -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-cinzel font-bold uppercase tracking-[0.15em] text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                        <i class="fa-regular fa-moon text-indigo-400/80"></i>
+                        Banimento Noturno
+                    </h3>
+                    {% if registro.banimento_noturno %}
+                        <div class="p-4 rounded-xl bg-space-900/40 border border-white/5 text-sm text-slate-300">
+                            {{ registro.banimento_noturno }}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-slate-500 italic">Prática de banimento noturno não registrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- SECTION 2.5: DIÁRIO MÁGICO (NOTURNO) -->
+            {% if registro.diario_magico %}
+            <div class="space-y-3">
+                <h3 class="text-xs font-cinzel font-bold uppercase tracking-[0.15em] text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                    <i class="fa-solid fa-scroll text-purple-400/80"></i>
+                    Diário Mágico (Ciclo Noturno)
+                </h3>
+                <div class="p-5 rounded-xl bg-space-900/40 border border-white/5 text-sm text-slate-300 leading-relaxed">
+                    {{ registro.diario_magico }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- SECTION 3: ASANA -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-cinzel font-bold uppercase tracking-[0.15em] text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                    <i class="fa-solid fa-yin-yang text-amber-600/80"></i>
+                    Prática Corporal: Asana do Mês
+                </h3>
+                {% if registro.asana_tempo %}
+                    <div class="inline-flex items-center px-3 py-1 text-xs font-semibold bg-amber-950/40 border border-amber-500/20 text-amber-400 rounded-md mb-2">
+                        <i class="fa-regular fa-clock mr-1.5 text-mystic-gold"></i> Tempo de Imobilidade: {{ registro.asana_tempo }} minutos
+                    </div>
+                {% endif %}
+                {% if registro.pratica_mes_asana %}
+                    <div class="p-5 rounded-xl bg-space-900/40 border border-white/5 text-sm text-slate-300 leading-relaxed">
+                        {{ registro.pratica_mes_asana }}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-slate-500 italic">Nenhuma prática de Asana registrada para este dia.</p>
+                {% endif %}
+            </div>
+
+            <!-- SECTION 3.5: CONDIÇÕES & EFEMÉRIDES -->
+            {% if registro.fase_lua or registro.humor_predominante or registro.clima %}
+            <div class="space-y-3">
+                <h3 class="text-xs font-cinzel font-bold uppercase tracking-[0.15em] text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                    <i class="fa-solid fa-chart-simple text-purple-400/80"></i>
+                    Condições & Efemérides
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {% if registro.fase_lua %}
+                    <div class="p-4 rounded-xl bg-space-900/40 border border-white/5 text-sm">
+                        <span class="block text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">Fase da Lua</span>
+                        <span class="text-slate-300 font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-moon text-mystic-gold"></i> {{ registro.fase_lua }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if registro.humor_predominante %}
+                    <div class="p-4 rounded-xl bg-space-900/40 border border-white/5 text-sm">
+                        <span class="block text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">Humor Predominante</span>
+                        <span class="text-slate-300 font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-heart-pulse text-rose-400/80"></i> {{ registro.humor_predominante }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if registro.clima %}
+                    <div class="p-4 rounded-xl bg-space-900/40 border border-white/5 text-sm">
+                        <span class="block text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">Clima do Dia</span>
+                        <span class="text-slate-300 font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-cloud-sun text-sky-400/80"></i> {{ registro.clima }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- SECTION 4: INSIGHTS & EPHEMERIDES -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-cinzel font-bold uppercase tracking-[0.15em] text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                    <i class="fa-solid fa-brain text-purple-400/80"></i>
+                    Ideias & Insights (Lampejos)
+                </h3>
+                {% if registro.ideias_insights %}
+                    <div class="p-5 rounded-xl bg-gradient-to-br from-indigo-950/20 to-purple-950/20 border border-purple-500/10 text-sm text-slate-300 leading-relaxed shadow-mystic-glow">
+                        {{ registro.ideias_insights }}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-slate-500 italic">Nenhum insight alquímico foi catalogado hoje.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Decorative Bottom Bar -->
+        <div class="h-1.5 w-full bg-gradient-to-r from-mystic-gold/40 via-purple-500/40 to-mystic-gold/40"></div>
+    </div>
+</div>
+{% endblock %}

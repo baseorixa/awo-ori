@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if action == 'novo' %}Novo Registro{% else %}Editar Registro{% endif %} - Portal Awó Orí
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+
+    <!-- Breadcrumbs / Navigation Back -->
+    {% if action == 'editar' %}
+    <div class="mb-6">
+        <a href="{{ url_for('dashboard') }}" class="text-xs font-semibold text-slate-500 hover:text-mystic-gold uppercase tracking-wider flex items-center gap-1.5 transition-colors">
+            <i class="fa-solid fa-arrow-left"></i> Voltar para a Dashboard
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Header Card -->
+    <div class="glass-card p-6 md:p-8 rounded-xl rounded-b-none border-b-0 shadow-lg text-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none"></div>
+        <span class="text-3xl text-mystic-gold mb-3 block animate-pulse"><i class="fa-solid fa-scroll"></i></span>
+        <h2 class="text-2xl font-cinzel font-bold tracking-wider text-mystic-gold">
+            {% if action == 'novo' %}Novo Registro Alquímico{% else %}Editar Registro de Prática{% endif %}
+        </h2>
+        <p class="text-xs text-slate-500 uppercase tracking-widest mt-1">
+            {% if action == 'novo' %}Consagre a sua prática diária escrevendo no pergaminho abaixo{% else %}Atualize os dados e reflexões do seu diário iniciático{% endif %}
+        </p>
+    </div>
+
+    <!-- Form Container -->
+    <form method="POST" action="{% if action == 'novo' %}{{ url_for('novo_registro') }}{% else %}{{ url_for('editar_registro', id=registro.id) }}{% endif %}" 
+          class="glass-card p-6 md:p-8 rounded-xl rounded-t-none border-t border-white/5 space-y-8 shadow-xl">
+        
+        <!-- SECTION 1: IDENTIFICATION -->
+        <div class="space-y-4">
+            <h3 class="text-xs font-cinzel font-bold uppercase tracking-widest text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-mystic-gold"></span>
+                1. Identificação Básica
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nome do Aluno -->
+                <div class="space-y-1.5">
+                    <label for="nome_aluno" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Nome do Aluno *</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-user-astronaut text-xs"></i>
+                        </span>
+                        <input type="text" id="nome_aluno" name="nome_aluno" required
+                               placeholder="Ex: Frater Lux Oris" 
+                               value="{% if registro %}{{ registro.nome_aluno }}{% endif %}"
+                               class="w-full pl-9 pr-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                    </div>
+                </div>
+
+                <!-- Data da Prática -->
+                <div class="space-y-1.5">
+                    <label for="data" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Data do Registro *</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-regular fa-calendar text-xs"></i>
+                        </span>
+                        <input type="date" id="data" name="data" required 
+                               value="{{ today }}"
+                               class="w-full pl-9 pr-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: SLEEP & DREAMS -->
+        <div class="space-y-4">
+            <h3 class="text-xs font-cinzel font-bold uppercase tracking-widest text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-mystic-gold"></span>
+                2. Ciclo Onírico (Astral)
+            </h3>
+            
+            <div class="space-y-1.5">
+                <label for="diario_sonhos" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Diário dos Sonhos</span>
+                    <span class="text-[10px] text-slate-600 font-normal italic">Descreva com o máximo de detalhes possível</span>
+                </label>
+                <textarea id="diario_sonhos" name="diario_sonhos" rows="4" 
+                          placeholder="Ex: Sonhei que estava subindo uma montanha cercada de estrelas em espiral..."
+                          class="w-full px-4 py-3 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">{% if registro %}{{ registro.diario_sonhos or '' }}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <!-- SECTION 3: RITUAL WORK -->
+        <div class="space-y-4">
+            <h3 class="text-xs font-cinzel font-bold uppercase tracking-widest text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-mystic-gold"></span>
+                3. Trabalho de Prática e Ritualística
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Banimento Matutino -->
+                <div class="space-y-1.5">
+                    <label for="banimento_matutino" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Banimento Matutino</label>
+                    <input type="text" id="banimento_matutino" name="banimento_matutino" 
+                           placeholder="Ex: 06:30 - RMP, visualização clara, sensação de centramento"
+                           value="{% if registro %}{{ registro.banimento_matutino or '' }}{% endif %}"
+                           class="w-full px-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                </div>
+
+                <!-- Banimento Noturno -->
+                <div class="space-y-1.5">
+                    <label for="banimento_noturno" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Banimento Noturno</label>
+                    <input type="text" id="banimento_noturno" name="banimento_noturno" 
+                           placeholder="Ex: 22:30 - Rubi Estrela, foco no pilar médio"
+                           value="{% if registro %}{{ registro.banimento_noturno or '' }}{% endif %}"
+                           class="w-full px-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                </div>
+            </div>
+
+            <!-- Tempo de Prática (Asana) -->
+            <div class="space-y-1.5">
+                <label for="asana_tempo" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Tempo de Prática (minutos)</label>
+                <input type="number" id="asana_tempo" name="asana_tempo" min="1" max="180"
+                       placeholder="Ex: 20"
+                       value="{% if registro %}{{ registro.asana_tempo or '' }}{% endif %}"
+                       class="w-full px-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+            </div>
+
+            <!-- Prática de Asana do Mês (Impressões) -->
+            <div class="space-y-1.5">
+                <label for="pratica_mes_asana" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Impressões da Imobilidade (Asana)</span>
+                    <span class="text-[10px] text-slate-600 font-normal italic">Registre as impressões físicas e mentais</span>
+                </label>
+                <textarea id="pratica_mes_asana" name="pratica_mes_asana" rows="3" 
+                          placeholder="Ex: Posição do Lótus. Leve desconforto nos joelhos aos 15 min, mente agitada no início, mas depois estabilizada."
+                          class="w-full px-4 py-3 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">{% if registro %}{{ registro.pratica_mes_asana or '' }}{% endif %}</textarea>
+            </div>
+            
+            <!-- Diário Mágico -->
+            <div class="space-y-1.5">
+                <label for="diario_magico" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Diário Mágico</span>
+                    <span class="text-[10px] text-slate-600 font-normal italic">Registro reflexivo ou anotações rituais adicionais</span>
+                </label>
+                <textarea id="diario_magico" name="diario_magico" rows="3" 
+                          placeholder="Reflexões sobre a egrégora do dia..."
+                          class="w-full px-4 py-3 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">{% if registro %}{{ registro.diario_magico or '' }}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <!-- SECTION 4: METRICS & SPARKS -->
+        <div class="space-y-4">
+            <h3 class="text-xs font-cinzel font-bold uppercase tracking-widest text-mystic-gold flex items-center gap-2 border-b border-white/5 pb-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-mystic-gold"></span>
+                4. Métricas e Centelhas de Sabedoria
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Fase da Lua -->
+                <div class="space-y-1.5">
+                    <label for="fase_lua" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Fase da Lua</label>
+                    <select id="fase_lua" name="fase_lua" 
+                            class="w-full px-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                        <option value="">Selecione...</option>
+                        <option value="Nova" {% if registro and registro.fase_lua == 'Nova' %}selected{% endif %}>Nova</option>
+                        <option value="Crescente" {% if registro and registro.fase_lua == 'Crescente' %}selected{% endif %}>Crescente</option>
+                        <option value="Cheia" {% if registro and registro.fase_lua == 'Cheia' %}selected{% endif %}>Cheia</option>
+                        <option value="Minguante" {% if registro and registro.fase_lua == 'Minguante' %}selected{% endif %}>Minguante</option>
+                    </select>
+                </div>
+
+                <!-- Humor Predominante -->
+                <div class="space-y-1.5">
+                    <label for="humor_predominante" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Humor Predominante</label>
+                    <select id="humor_predominante" name="humor_predominante" 
+                            class="w-full px-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                        <option value="">Selecione...</option>
+                        <option value="Equilibrado" {% if registro and registro.humor_predominante == 'Equilibrado' %}selected{% endif %}>Equilibrado</option>
+                        <option value="Focado" {% if registro and registro.humor_predominante == 'Focado' %}selected{% endif %}>Focado</option>
+                        <option value="Ansioso" {% if registro and registro.humor_predominante == 'Ansioso' %}selected{% endif %}>Ansioso</option>
+                        <option value="Disperso" {% if registro and registro.humor_predominante == 'Disperso' %}selected{% endif %}>Disperso</option>
+                        <option value="Cansado" {% if registro and registro.humor_predominante == 'Cansado' %}selected{% endif %}>Cansado</option>
+                        <option value="Energizado" {% if registro and registro.humor_predominante == 'Energizado' %}selected{% endif %}>Energizado</option>
+                    </select>
+                </div>
+
+                <!-- Clima/Condições do Dia -->
+                <div class="space-y-1.5">
+                    <label for="clima" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Clima / Condições do Dia</label>
+                    <input type="text" id="clima" name="clima" 
+                           placeholder="Ex: Ensolarado / Seco"
+                           value="{% if registro %}{{ registro.clima or '' }}{% endif %}"
+                           class="w-full px-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                </div>
+            </div>
+
+            <!-- Ideias e Insights -->
+            <div class="space-y-1.5">
+                <label for="ideias_insights" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Ideias e Insights</span>
+                    <span class="text-[10px] text-slate-600 font-normal italic">Ideias repentinas, epifanias ou intuições que surgiram no dia</span>
+                </label>
+                <textarea id="ideias_insights" name="ideias_insights" rows="3" 
+                          placeholder="Ex: Tive o insight de associar o arcano do dia com as correspondências astrológicas da prática matinal..."
+                          class="w-full px-4 py-3 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">{% if registro %}{{ registro.ideias_insights or '' }}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <!-- Submit Button Panel -->
+        <div class="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-end gap-3">
+            <a href="{{ url_for('index') }}" class="w-full sm:w-auto px-6 py-2.5 border border-white/10 text-slate-400 text-center text-sm font-semibold rounded-lg hover:bg-white/5 hover:text-slate-200 transition-colors">
+                Cancelar
+            </a>
+            <button type="submit" class="w-full sm:w-auto px-8 py-2.5 bg-mystic-gold text-space-950 font-bold uppercase tracking-wider text-xs rounded-lg hover:bg-mystic-goldHover transition-colors shadow-mystic-glow flex items-center justify-center gap-2">
+                <i class="fa-solid fa-compass"></i>
+                {% if action == 'novo' %}Consagrar Registro{% else %}Atualizar Registro{% endif %}
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
