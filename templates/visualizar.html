@@ -7,20 +7,25 @@
 
     <!-- Top Action Buttons / Breadcrumbs -->
     <div class="flex items-center justify-between">
-        {% if session.get('logged_in') %}
+        {% if session.get('role') == 'professor' %}
             <a href="{{ url_for('dashboard') }}" class="text-xs font-semibold text-slate-500 hover:text-mystic-gold uppercase tracking-wider flex items-center gap-1.5 transition-colors">
                 <i class="fa-solid fa-arrow-left"></i> Voltar para a Dashboard
             </a>
         {% else %}
-            <a href="{{ url_for('meu_historico', aluno=registro.nome_aluno) }}" class="text-xs font-semibold text-slate-500 hover:text-mystic-gold uppercase tracking-wider flex items-center gap-1.5 transition-colors">
+            <a href="{{ url_for('meu_historico') }}" class="text-xs font-semibold text-slate-500 hover:text-mystic-gold uppercase tracking-wider flex items-center gap-1.5 transition-colors">
                 <i class="fa-solid fa-arrow-left"></i> Voltar para o Meu Histórico
             </a>
         {% endif %}
         
-        {% if session.get('logged_in') %}
         <div class="flex items-center space-x-3">
+            <!-- Download PDF Button (available to all logged in users) -->
+            <a href="{{ url_for('download_pdf', id=registro.id) }}" class="inline-flex items-center px-4 py-2 border border-mystic-gold/40 text-xs font-semibold uppercase tracking-wider rounded-lg text-mystic-gold bg-mystic-gold/10 hover:bg-mystic-gold/20 hover:border-mystic-gold transition-all duration-300 shadow-mystic-glow">
+                <i class="fa-solid fa-file-pdf mr-2"></i>Baixar PDF
+            </a>
+            
+            {% if session.get('role') == 'professor' %}
             <a href="{{ url_for('editar_registro', id=registro.id) }}" class="inline-flex items-center px-4 py-2 border border-white/10 text-xs font-semibold uppercase tracking-wider rounded-lg text-slate-300 bg-white/5 hover:bg-white/10 transition-all duration-300">
-                <i class="fa-solid fa-pen-to-square mr-2"></i>Editar Registro
+                <i class="fa-solid fa-pen-to-square mr-2"></i>Editar
             </a>
             
             <form action="{{ url_for('deletar_registro', id=registro.id) }}" method="POST" 
@@ -29,8 +34,8 @@
                     <i class="fa-regular fa-trash-can mr-2"></i>Excluir
                 </button>
             </form>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     <!-- Grimoire Sheet Layout -->

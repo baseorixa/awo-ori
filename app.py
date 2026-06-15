@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 from dotenv import load_dotenv
 from models import db, RegistroDiario
 from datetime import datetime
@@ -478,6 +478,42 @@ def visualizar_registro(id):
         return redirect(url_for('index'))
         
     return render_template('visualizar.html', registro=registro)
+
+@app.route('/registro/<int:id>/pdf')
+def download_pdf(id):
+    registro = RegistroDiario.query.get_or_404(id)
+    
+    is_admin = is_professor()
+    student_query = request.args.get('aluno', '').strip()
+    user_email = session.get('email')
+    
+    # Security Filter: restrict access to admin or the specific student by email
+    has_access = False
+    if is_admin:
+        has_access = True
+    elif user_email and registro.email_aluno and user_email.lower() == registro.email_aluno.lower():
+        has_access = True
+    elif not registro.email_aluno and student_query and student_query.lower() == registro.nome_aluno.lower():
+        # Legacy compatibility fallback
+        has_access = True
+        
+    if not has_access:
+        flash('Acesso recusado. Apenas o próprio iniciado ou o professor podem baixar este diário.', 'error')
+        return redirect(url_for('index'))
+        
+    try:
+        pdf_bytes = generate_pdf(registro)
+        safe_name = registro.nome_aluno.replace(' ', '_').replace('/', '_')
+        filename = f"Diario_{safe_name}_{registro.data.strftime('%Y%m%d')}.pdf"
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        flash(f'Erro ao gerar o download do PDF: {str(e)}', 'error')
+        return redirect(url_for('visualizar_registro', id=id))
 
 @app.route('/registro/<int:id>/editar', methods=['GET', 'POST'])
 def editar_registro(id):
