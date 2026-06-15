@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Acesso ao Portal - Portal Awó Orí{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto py-8">
+    <!-- Main Card -->
+    <div class="glass-card p-8 rounded-2xl shadow-2xl relative overflow-hidden border border-white/5">
+        <div class="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none"></div>
+        
+        <div class="text-center space-y-3 mb-8">
+            <span class="text-4xl text-mystic-gold mb-1 block animate-pulse">
+                <i class="fa-solid fa-circle-nodes"></i>
+            </span>
+            <h2 class="text-2xl font-cinzel font-bold tracking-widest text-slate-100">Portal Awó Orí</h2>
+            <p class="text-xs text-slate-500 uppercase tracking-widest">Identificação do Iniciado</p>
+            <div class="w-12 h-[1px] bg-mystic-gold/30 mx-auto mt-2"></div>
+        </div>
+
+        {% if google_configured %}
+            <!-- Google OAuth Login -->
+            <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
+                <input type="hidden" name="action_type" value="google_oauth">
+                <button type="submit" class="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold uppercase tracking-wider text-xs rounded-lg transition-all shadow-lg flex items-center justify-center gap-3">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                        <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                            <path d="M21.35,11.1H12v2.7h5.38C16.88,15.22,14.67,16.5,12,16.5c-3.04,0-5.61-2.05-6.53-4.82C5.24,11.08,5.12,10.45,5.12,9.8c0-0.65,0.12-1.28,0.35-1.88C6.39,5.15,8.96,3.1,12,3.1c1.94,0,3.7,0.76,5.03,2.02l2.02-2.02C16.92,1.15,14.59,0.2,12,0.2C7.31,0.2,3.31,2.89,1.4,6.79C0.84,7.94,0.52,9.22,0.52,10.57s0.32,2.63,0.88,3.77c1.91,3.9,5.91,6.59,10.6,6.59,4.89,0,8.9-3.24,10.15-7.73c0.41-1.48,0.61-3.03,0.61-4.57C22.75,12.78,22.3,11.89,21.35,11.1L21.35,11.1z" fill="#EA4335"/>
+                        </g>
+                    </svg>
+                    Acessar com Google Account
+                </button>
+            </form>
+            
+            <p class="text-[10px] text-center text-slate-500 mt-4 leading-relaxed">
+                * Alunos e professores devem usar suas contas do Google. O portal detectará automaticamente suas permissões no sistema.
+            </p>
+        {% else %}
+            <!-- Local Password and Student Bypass (Modo Desenvolvedor) -->
+            <div class="space-y-6">
+                <div class="p-3 bg-amber-950/20 border border-amber-500/20 rounded-lg text-center">
+                    <span class="text-xs font-semibold text-amber-400 block uppercase tracking-wider mb-0.5">Bypass Local Ativo</span>
+                    <p class="text-[10px] text-slate-400">O Google OAuth não está configurado localmente. Escolha seu método de teste abaixo.</p>
+                </div>
+                
+                <!-- Student Bypass Form -->
+                <div class="border border-white/5 rounded-xl p-4 bg-space-950/40 space-y-4">
+                    <h3 class="text-xs font-cinzel font-bold text-mystic-gold uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-astronaut"></i> Entrar como Aluno
+                    </h3>
+                    
+                    <form method="POST" action="{{ url_for('login') }}" class="space-y-3">
+                        <input type="hidden" name="action_type" value="bypass_student">
+                        
+                        <div class="space-y-1">
+                            <label for="student_name" class="block text-[10px] uppercase tracking-wider text-slate-400">Nome Iniciático</label>
+                            <input type="text" id="student_name" name="student_name" required placeholder="Ex: Frater Lux"
+                                   class="w-full px-3 py-1.5 border border-white/10 rounded bg-space-950 text-xs text-slate-200 focus:outline-none focus:border-mystic-gold/50">
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <label for="student_email" class="block text-[10px] uppercase tracking-wider text-slate-400">E-mail de Teste</label>
+                            <input type="email" id="student_email" name="student_email" required placeholder="Ex: aluno@teste.com"
+                                   class="w-full px-3 py-1.5 border border-white/10 rounded bg-space-950 text-xs text-slate-200 focus:outline-none focus:border-mystic-gold/50">
+                        </div>
+                        
+                        <button type="submit" class="w-full py-2 bg-mystic-gold/10 hover:bg-mystic-gold/20 text-mystic-gold font-bold uppercase tracking-wider text-[10px] rounded border border-mystic-gold/30 transition-colors">
+                            Acessar como Aluno
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Professor Bypass Form -->
+                <div class="border border-white/5 rounded-xl p-4 bg-space-950/40 space-y-4">
+                    <h3 class="text-xs font-cinzel font-bold text-mystic-gold uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-shield"></i> Entrar como Professor
+                    </h3>
+                    
+                    <form method="POST" action="{{ url_for('login') }}" class="space-y-3">
+                        <input type="hidden" name="action_type" value="bypass_professor">
+                        
+                        <div class="space-y-1">
+                            <label for="password" class="block text-[10px] uppercase tracking-wider text-slate-400">Chave Alquímica (Senha)</label>
+                            <input type="password" id="password" name="password" required placeholder="••••••••"
+                                   class="w-full px-3 py-1.5 border border-white/10 rounded bg-space-950 text-xs text-slate-200 focus:outline-none focus:border-mystic-gold/50">
+                        </div>
+                        
+                        <button type="submit" class="w-full py-2 bg-mystic-gold text-space-950 font-bold uppercase tracking-wider text-[10px] rounded hover:bg-mystic-goldHover transition-colors shadow-mystic-glow">
+                            Acessar como Professor
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

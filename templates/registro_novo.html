@@ -49,8 +49,8 @@
                         </span>
                         <input type="text" id="nome_aluno" name="nome_aluno" required
                                placeholder="Ex: Frater Lux Oris" 
-                               value="{% if registro %}{{ registro.nome_aluno }}{% endif %}"
-                               class="w-full pl-9 pr-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all">
+                               value="{% if registro %}{{ registro.nome_aluno }}{% else %}{{ session.get('name', '') }}{% endif %}"
+                               {% if session.get('role') == 'aluno' and action == 'novo' %}readonly class="w-full pl-9 pr-4 py-2.5 border border-white/10 rounded-lg bg-space-900/50 text-sm text-slate-400 cursor-not-allowed focus:outline-none focus:ring-0"{% else %}class="w-full pl-9 pr-4 py-2.5 border border-white/10 rounded-lg bg-space-950/80 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-mystic-gold/50 focus:ring-1 focus:ring-mystic-gold/20 transition-all"{% endif %}>
                     </div>
                 </div>
 

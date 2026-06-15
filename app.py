@@ -1,4 +1,11 @@
 import os
+import threading
+import smtplib
+import urllib.parse
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from dotenv import load_dotenv
 from models import db, RegistroDiario
@@ -6,6 +13,14 @@ from datetime import datetime
 from werkzeug.middleware.proxy_fix import ProxyFix
 import google_auth_oauthlib.flow
 from googleapiclient.discovery import build
+
+# ReportLab for PDF generation
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+import io
 
 # Load environment variables from .env
 load_dotenv()
@@ -36,9 +51,237 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize database
 db.init_app(app)
 
-# Ensure tables are created
+# Ensure tables are created and migrate schema if necessary
 with app.app_context():
     db.create_all()
+    # Dynamic migration to add email_aluno to registers table if it doesn't exist
+    try:
+        db.session.execute(db.text("SELECT email_aluno FROM registros_diarios LIMIT 1"))
+    except Exception:
+        db.session.rollback()
+        try:
+            # Check database dialect to alter table accordingly
+            db.session.execute(db.text("ALTER TABLE registros_diarios ADD COLUMN email_aluno VARCHAR(120)"))
+            db.session.commit()
+            print("Successfully added email_aluno column to registros_diarios table.")
+        except Exception as alter_err:
+            print(f"Failed to add column email_aluno: {alter_err}")
+            db.session.rollback()
+
+def generate_pdf(registro):
+    """Generates a beautiful mystical/clean PDF report of the daily log."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=letter,
+        rightMargin=inch*0.75, 
+        leftMargin=inch*0.75,
+        topMargin=inch*0.75, 
+        bottomMargin=inch*0.75
+    )
+    
+    styles = getSampleStyleSheet()
+    
+    # Custom styles matching the mystical portal theme but optimized for print readability
+    title_style = ParagraphStyle(
+        'MysticTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=20,
+        textColor=colors.HexColor('#dfb76c'), # Gold
+        spaceAfter=15,
+        alignment=1 # Center
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'MysticSubtitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=10,
+        textColor=colors.HexColor('#64748b'), # Slate 500
+        spaceAfter=25,
+        alignment=1 # Center
+    )
+    
+    heading_style = ParagraphStyle(
+        'MysticHeading',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        textColor=colors.HexColor('#8b5cf6'), # Purple
+        spaceBefore=12,
+        spaceAfter=6
+    )
+    
+    body_style = ParagraphStyle(
+        'MysticBody',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        textColor=colors.HexColor('#1e293b'), # Dark Slate
+        spaceAfter=10,
+        leading=14
+    )
+    
+    meta_style = ParagraphStyle(
+        'MysticMeta',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        textColor=colors.HexColor('#0f172a'),
+        leading=14
+    )
+
+    story = []
+    
+    # Header
+    story.append(Paragraph("AWÓ ORÍ — DIÁRIO INICIÁTICO", title_style))
+    story.append(Paragraph(f"Registro Consagrado em {registro.data.strftime('%d/%m/%Y')}", subtitle_style))
+    
+    # Metadata Table
+    meta_data = [
+        [Paragraph("Iniciado / Aluno:", meta_style), Paragraph(registro.nome_aluno, body_style)],
+        [Paragraph("Data do Registro:", meta_style), Paragraph(registro.data.strftime('%d/%m/%Y'), body_style)],
+        [Paragraph("E-mail do Aluno:", meta_style), Paragraph(registro.email_aluno or "Não informado", body_style)]
+    ]
+    
+    if registro.fase_lua:
+        meta_data.append([Paragraph("Fase da Lua:", meta_style), Paragraph(registro.fase_lua, body_style)])
+    if registro.humor_predominante:
+        meta_data.append([Paragraph("Humor Predominante:", meta_style), Paragraph(registro.humor_predominante, body_style)])
+    if registro.clima:
+        meta_data.append([Paragraph("Clima:", meta_style), Paragraph(registro.clima, body_style)])
+        
+    t = Table(meta_data, colWidths=[150, 350])
+    t.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('LINEBELOW', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 15))
+    
+    # Dream Diary
+    if registro.diario_sonhos:
+        story.append(Paragraph("Diário de Sonhos", heading_style))
+        story.append(Paragraph(registro.diario_sonhos.replace('\n', '<br/>'), body_style))
+        story.append(Spacer(1, 10))
+        
+    # Morning Banishing
+    if registro.banimento_matutino:
+        story.append(Paragraph("Ritual de Banimento Matutino", heading_style))
+        story.append(Paragraph(registro.banimento_matutino.replace('\n', '<br/>'), body_style))
+        story.append(Spacer(1, 10))
+        
+    # Asana Practice
+    if registro.pratica_mes_asana or registro.asana_tempo:
+        story.append(Paragraph("Prática de Asana", heading_style))
+        asana_details = f"Tempo de Prática: {registro.asana_tempo} minutos" if registro.asana_tempo else ""
+        if asana_details:
+            story.append(Paragraph(asana_details, meta_style))
+        if registro.pratica_mes_asana:
+            story.append(Paragraph(registro.pratica_mes_asana.replace('\n', '<br/>'), body_style))
+        story.append(Spacer(1, 10))
+        
+    # Night Banishing
+    if registro.banimento_noturno:
+        story.append(Paragraph("Ritual de Banimento Noturno", heading_style))
+        story.append(Paragraph(registro.banimento_noturno.replace('\n', '<br/>'), body_style))
+        story.append(Spacer(1, 10))
+        
+    # Magic Diary
+    if registro.diario_magico:
+        story.append(Paragraph("Diário Mágico", heading_style))
+        story.append(Paragraph(registro.diario_magico.replace('\n', '<br/>'), body_style))
+        story.append(Spacer(1, 10))
+        
+    # Insights & Ideas
+    if registro.ideias_insights:
+        story.append(Paragraph("Ideias & Insights", heading_style))
+        story.append(Paragraph(registro.ideias_insights.replace('\n', '<br/>'), body_style))
+        story.append(Spacer(1, 10))
+        
+    doc.build(story)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return pdf_bytes
+
+def send_email_with_pdf(nome_aluno, email_aluno, data_str, pdf_bytes, fase_lua=None, humor=None):
+    """Sends the PDF report via SMTP to the professor (rhormidas@gmail.com)."""
+    smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+    try:
+        smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    except ValueError:
+        smtp_port = 587
+        
+    smtp_username = os.environ.get('SMTP_USERNAME')
+    smtp_password = os.environ.get('SMTP_PASSWORD')
+    sender_email = os.environ.get('MAIL_DEFAULT_SENDER', smtp_username)
+    
+    # Destination email is the professor email
+    recipient_email = os.environ.get('PROFESSOR_EMAIL', 'rhormidas@gmail.com')
+    
+    if not smtp_username or not smtp_password:
+        print("Email sending skipped: SMTP credentials (SMTP_USERNAME / SMTP_PASSWORD) not configured.")
+        return False
+        
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = f"Novo Diário Consagrado - {nome_aluno} ({data_str})"
+        
+        # Email Body
+        body = f"""Olá, Professor.
+
+Um novo diário de práticas iniciáticas foi enviado e consagrado no portal Awó Orí.
+
+Aluno: {nome_aluno}
+E-mail: {email_aluno or 'Não informado'}
+Data: {data_str}
+Fase da Lua: {fase_lua or 'Não informada'}
+Humor Predominante: {humor or 'Não informado'}
+
+O relatório detalhado está em anexo em formato PDF.
+
+---
+Portal Awó Orí
+"""
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        
+        # Attachment
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(pdf_bytes)
+        encoders.encode_base64(part)
+        safe_name = nome_aluno.replace(' ', '_').replace('/', '_')
+        filename = f"Diario_{safe_name}_{data_str.replace('/', '')}.pdf"
+        part.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+        msg.attach(part)
+        
+        # Connect and Send
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+        server.quit()
+        print(f"PDF email sent successfully to {recipient_email}!")
+        return True
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        return False
+
+def trigger_email_send(registro, pdf_bytes):
+    """Spawns a background thread to send the email and avoid blocking the web request."""
+    data_str = registro.data.strftime('%d/%m/%Y')
+    thread = threading.Thread(
+        target=send_email_with_pdf,
+        args=(registro.nome_aluno, registro.email_aluno, data_str, pdf_bytes, registro.fase_lua, registro.humor_predominante)
+    )
+    thread.daemon = True
+    thread.start()
 
 # Google OAuth helper
 def get_google_flow(state=None):
@@ -61,18 +304,36 @@ def get_google_flow(state=None):
     )
 
 def is_professor():
-    """Helper to check if the logged in user matches the professor's credentials."""
-    is_logged = session.get('logged_in')
-    user_email = session.get('email')
-    prof_email = os.environ.get('PROFESSOR_EMAIL')
+    """Helper to check if the logged in user is the professor."""
+    return bool(session.get('logged_in') and session.get('role') == 'professor')
+
+@app.before_request
+def require_login():
+    """Enforces authentication for all routes except login, callback, logout, and static files."""
+    allowed_endpoints = ['login', 'google_callback', 'logout', 'static']
+    if request.path.startswith('/static'):
+        return
+    if not session.get('logged_in'):
+        if request.endpoint and request.endpoint not in allowed_endpoints:
+            return redirect(url_for('login'))
+
+@app.context_processor
+def inject_global_vars():
+    """Injects Pix donation details globally into all template contexts."""
+    pix_key = os.environ.get('PIX_KEY', 'seu-email-ou-chave-pix@provedor.com')
+    pix_copia_cola = os.environ.get('PIX_COPIA_COLA', '')
     
-    # In local testing, if Google credentials are not set, password login is used.
-    # We allow bypass if GOOGLE_CLIENT_ID is not configured and session says logged_in.
-    google_configured = bool(os.environ.get("GOOGLE_CLIENT_ID") and os.environ.get("GOOGLE_CLIENT_SECRET"))
-    if not google_configured:
-        return bool(is_logged)
-        
-    return bool(is_logged and user_email and prof_email and user_email.lower() == prof_email.lower())
+    # Generate dynamic QR Code URL
+    qr_data = pix_copia_cola if pix_copia_cola else f"pix:{pix_key}"
+    encoded_qr_data = urllib.parse.quote(qr_data)
+    pix_qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={encoded_qr_data}"
+    
+    return {
+        'pix_key': pix_key,
+        'pix_copia_cola': pix_copia_cola,
+        'pix_qr_url': pix_qr_url
+    }
+
 
 @app.route('/')
 def index():
@@ -83,7 +344,7 @@ def index():
 def dashboard():
     if not is_professor():
         flash('Acesso restrito. Por favor, faça login como professor.', 'error')
-        return redirect(url_for('login_professor'))
+        return redirect(url_for('login'))
         
     aluno_filter = request.args.get('aluno', '').strip()
     
@@ -163,6 +424,7 @@ def novo_registro():
             
         novo = RegistroDiario(
             nome_aluno=nome_aluno,
+            email_aluno=session.get('email'),
             data=data,
             diario_sonhos=diario_sonhos,
             banimento_matutino=banimento_matutino,
@@ -179,8 +441,17 @@ def novo_registro():
         
         db.session.add(novo)
         db.session.commit()
-        flash('Registro diário adicionado com sucesso!', 'success')
-        return redirect(url_for('meu_historico', aluno=nome_aluno))
+        
+        # Generate and send PDF in background
+        try:
+            pdf_bytes = generate_pdf(novo)
+            trigger_email_send(novo, pdf_bytes)
+            flash('Registro diário consagrado e enviado com sucesso ao professor!', 'success')
+        except Exception as pdf_err:
+            print(f"Failed to generate or send PDF: {pdf_err}")
+            flash('Registro diário consagrado com sucesso! (Erro ao enviar e-mail com anexo)', 'success')
+            
+        return redirect(url_for('meu_historico'))
         
     return redirect(url_for('index'))
 
@@ -190,9 +461,19 @@ def visualizar_registro(id):
     
     is_admin = is_professor()
     student_query = request.args.get('aluno', '').strip()
+    user_email = session.get('email')
     
-    # Security Filter: restrict access to admin or the specific student
-    if not is_admin and (not student_query or student_query.lower() != registro.nome_aluno.lower()):
+    # Security Filter: restrict access to admin or the specific student by email
+    has_access = False
+    if is_admin:
+        has_access = True
+    elif user_email and registro.email_aluno and user_email.lower() == registro.email_aluno.lower():
+        has_access = True
+    elif not registro.email_aluno and student_query and student_query.lower() == registro.nome_aluno.lower():
+        # Legacy compatibility fallback
+        has_access = True
+        
+    if not has_access:
         flash('Acesso recusado. Apenas o próprio iniciado ou o professor podem ler este diário.', 'error')
         return redirect(url_for('index'))
         
@@ -202,7 +483,7 @@ def visualizar_registro(id):
 def editar_registro(id):
     if not is_professor():
         flash('Acesso restrito a professores para editar registros.', 'error')
-        return redirect(url_for('login_professor'))
+        return redirect(url_for('login'))
         
     registro = RegistroDiario.query.get_or_404(id)
     
@@ -263,7 +544,7 @@ def editar_registro(id):
 def deletar_registro(id):
     if not is_professor():
         flash('Acesso restrito a professores para remover registros.', 'error')
-        return redirect(url_for('login_professor'))
+        return redirect(url_for('login'))
         
     registro = RegistroDiario.query.get_or_404(id)
     db.session.delete(registro)
@@ -322,6 +603,7 @@ def enviar_rotina():
         
     novo = RegistroDiario(
         nome_aluno=nome_aluno,
+        email_aluno=session.get('email'),
         data=data,
         diario_sonhos=diario_sonhos,
         banimento_matutino=banimento_matutino,
@@ -338,17 +620,27 @@ def enviar_rotina():
     
     db.session.add(novo)
     db.session.commit()
-    flash('Relatório diário enviado e consagrado com sucesso!', 'success')
-    return redirect(url_for('meu_historico', aluno=nome_aluno))
+    
+    # Generate and send PDF in background
+    try:
+        pdf_bytes = generate_pdf(novo)
+        trigger_email_send(novo, pdf_bytes)
+        flash('Relatório diário enviado, consagrado e enviado com sucesso ao professor!', 'success')
+    except Exception as pdf_err:
+        print(f"Failed to generate or send PDF: {pdf_err}")
+        flash('Relatório diário enviado e consagrado com sucesso! (Erro ao enviar e-mail com anexo)', 'success')
+        
+    return redirect(url_for('meu_historico'))
 
-@app.route('/login_professor', methods=['GET', 'POST'])
-def login_professor():
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     google_configured = bool(os.environ.get("GOOGLE_CLIENT_ID") and os.environ.get("GOOGLE_CLIENT_SECRET"))
     
     if request.method == 'POST':
-        # If Google is configured, we initiate OAuth.
-        # If not, we allow password authentication as a local bypass.
-        if google_configured:
+        action_type = request.form.get('action_type', '')
+        
+        # If Google is configured and they clicked OAuth
+        if google_configured and action_type == 'google_oauth':
             try:
                 flow = get_google_flow()
                 authorization_url, state = flow.authorization_url(
@@ -359,22 +651,40 @@ def login_professor():
                 return redirect(authorization_url)
             except Exception as e:
                 flash(f'Erro ao iniciar o login com o Google: {str(e)}', 'error')
-                return redirect(url_for('login_professor'))
-        else:
-            # Local password bypass
+                return redirect(url_for('login'))
+                
+        # Local bypass logins (when testing locally)
+        elif action_type == 'bypass_professor':
             password = request.form.get('password', '')
             admin_password = os.environ.get('ADMIN_PASSWORD', 'ori_admin_2026')
             
             if password == admin_password:
                 session['logged_in'] = True
-                session['email'] = os.environ.get('PROFESSOR_EMAIL', 'professor@dev.local')
-                flash('Login local realizado (Sem Google OAuth).', 'success')
+                session['email'] = os.environ.get('PROFESSOR_EMAIL', 'rhormidas@gmail.com')
+                session['name'] = 'Professor'
+                session['role'] = 'professor'
+                flash('Login local realizado como Professor (Sem Google OAuth).', 'success')
                 return redirect(url_for('dashboard'))
             else:
                 flash('Chave alquímica incorreta.', 'error')
-                return redirect(url_for('login_professor'))
+                return redirect(url_for('login'))
+                
+        elif action_type == 'bypass_student':
+            student_email = request.form.get('student_email', 'aluno@teste.com').strip()
+            student_name = request.form.get('student_name', 'Iniciado Teste').strip()
             
-    return render_template('login_professor.html', google_configured=google_configured)
+            if not student_email or not student_name:
+                flash('Nome e e-mail são obrigatórios para o bypass!', 'error')
+                return redirect(url_for('login'))
+                
+            session['logged_in'] = True
+            session['email'] = student_email
+            session['name'] = student_name
+            session['role'] = 'aluno'
+            flash(f'Login local realizado como Aluno: {student_name} (Sem Google OAuth).', 'success')
+            return redirect(url_for('index'))
+            
+    return render_template('login.html', google_configured=google_configured)
 
 @app.route('/login/google/callback')
 def google_callback():
@@ -382,50 +692,56 @@ def google_callback():
         state = session.get('oauth_state')
         flow = get_google_flow(state=state)
         
-        # Fetch tokens using the callback URL parameters
         flow.fetch_token(authorization_response=request.url)
         credentials = flow.credentials
         
-        # Query user info using Google API Client
         service = build('oauth2', 'v2', credentials=credentials)
         user_info = service.userinfo().get().execute()
         email = user_info.get('email', '')
+        name = user_info.get('name', 'Iniciado')
         
-        prof_email = os.environ.get('PROFESSOR_EMAIL')
+        prof_email = os.environ.get('PROFESSOR_EMAIL', 'rhormidas@gmail.com')
+        
+        session['logged_in'] = True
+        session['email'] = email
+        session['name'] = name
+        
         if email and prof_email and email.lower() == prof_email.lower():
-            session['logged_in'] = True
-            session['email'] = email
-            flash('Autenticação com o Google realizada com sucesso.', 'success')
+            session['role'] = 'professor'
+            flash('Autenticação com o Google realizada com sucesso. Bem-vindo, Professor.', 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash(f'Acesso Negado: O e-mail {email} não possui privilégios de professor.', 'error')
+            session['role'] = 'aluno'
+            flash(f'Autenticação realizada com sucesso. Bem-vindo(a), {name}.', 'success')
             return redirect(url_for('index'))
             
     except Exception as e:
         flash(f'Erro na autenticação do Google: {str(e)}', 'error')
-        return redirect(url_for('login_professor'))
+        return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
     session.pop('email', None)
+    session.pop('name', None)
+    session.pop('role', None)
     session.pop('oauth_state', None)
     flash('Conexão encerrada com sucesso.', 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 @app.route('/meu_historico')
 def meu_historico():
-    student_name = request.args.get('aluno', '').strip()
-    search_performed = 'aluno' in request.args
+    if is_professor():
+        flash('Professores podem ver todos os registros no Dashboard.', 'info')
+        return redirect(url_for('dashboard'))
+        
+    user_email = session.get('email')
     registros = []
     
-    if student_name:
-        registros = RegistroDiario.query.filter(RegistroDiario.nome_aluno.ilike(student_name)).order_by(RegistroDiario.data.desc()).all()
+    if user_email:
+        registros = RegistroDiario.query.filter(RegistroDiario.email_aluno.ilike(user_email)).order_by(RegistroDiario.data.desc()).all()
         
-    return render_template('meu_historico.html', 
-                           registros=registros, 
-                           student_name=student_name, 
-                           search_performed=search_performed)
+    return render_template('meu_historico.html', registros=registros, student_email=user_email)
 
 if __name__ == '__main__':
     app.run(debug=True)

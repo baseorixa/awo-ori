@@ -61,7 +61,8 @@
                     <label for="nome_aluno" class="block text-[11px] font-medium text-zinc-400 uppercase tracking-widest">Iniciado / Aluno *</label>
                     <input type="text" id="nome_aluno" name="nome_aluno" required 
                            placeholder="Seu nome mágico ou civil"
-                           class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200 placeholder-zinc-700">
+                           value="{{ session.get('name', '') }}"
+                           {% if session.get('role') == 'aluno' %}readonly class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-500 bg-zinc-950/20 cursor-not-allowed"{% else %}class="w-full px-4 py-2.5 minimal-input text-sm text-zinc-200 placeholder-zinc-700"{% endif %}>
                 </div>
                 
                 <!-- Data (Auto populated to today but editable) -->

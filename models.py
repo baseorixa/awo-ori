@@ -11,6 +11,7 @@ class RegistroDiario(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     nome_aluno = db.Column(db.String(100), nullable=False, index=True)
+    email_aluno = db.Column(db.String(120), nullable=True, index=True)
     data = db.Column(db.Date, nullable=False, default=date.today, index=True)
     diario_sonhos = db.Column(db.Text, nullable=True)
     banimento_matutino = db.Column(db.String(255), nullable=True) # Horário e notas

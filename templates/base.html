@@ -97,25 +97,35 @@
             </div>
             
             <nav class="flex items-center space-x-6">
+                <!-- Global Donation Button -->
+                <button onclick="openPixModal()" class="text-xs font-semibold text-mystic-gold hover:text-mystic-goldHover transition-all flex items-center gap-1.5 px-3 py-2 rounded-lg bg-mystic-gold/10 border border-mystic-gold/20 hover:border-mystic-gold/40 shadow-mystic-glow">
+                    <i class="fa-solid fa-hands-holding-child"></i> Apoiar Portal
+                </button>
+                
                 {% if session.get('logged_in') %}
-                    <a href="{{ url_for('dashboard') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
-                        <i class="fa-solid fa-house mr-2"></i>Dashboard
-                    </a>
-                    <a href="{{ url_for('index') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
-                        <i class="fa-solid fa-feather mr-2"></i>Novo Registro
-                    </a>
+                    {% if session.get('role') == 'professor' %}
+                        <a href="{{ url_for('dashboard') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
+                            <i class="fa-solid fa-house mr-2"></i>Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('index') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
+                            <i class="fa-solid fa-feather mr-2"></i>Novo Registro
+                        </a>
+                        <a href="{{ url_for('meu_historico') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
+                            <i class="fa-solid fa-hourglass-half mr-2"></i>Meu Histórico
+                        </a>
+                    {% endif %}
+                    
+                    <span class="text-xs text-slate-400 font-semibold px-2 py-1 bg-space-900 border border-white/5 rounded-md truncate max-w-[120px] inline-block" title="{{ session.get('email') }}">
+                        {{ session.get('name', 'Iniciado') }}
+                    </span>
+                    
                     <a href="{{ url_for('logout') }}" class="inline-flex items-center px-4 py-2 border border-rose-500/40 text-xs font-semibold uppercase tracking-wider rounded-lg text-rose-400 bg-rose-950/10 hover:bg-rose-950/20 hover:border-rose-400 transition-all duration-300">
                         <i class="fa-solid fa-sign-out-alt mr-2"></i>Sair
                     </a>
                 {% else %}
-                    <a href="{{ url_for('index') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
-                        <i class="fa-solid fa-feather mr-2"></i>Novo Registro
-                    </a>
-                    <a href="{{ url_for('meu_historico') }}" class="text-sm font-medium text-slate-300 hover:text-mystic-gold transition-colors">
-                        <i class="fa-solid fa-hourglass-half mr-2"></i>Meu Histórico
-                    </a>
-                    <a href="{{ url_for('login_professor') }}" class="inline-flex items-center px-4 py-2 border border-mystic-gold/40 text-xs font-semibold uppercase tracking-wider rounded-lg text-mystic-gold bg-mystic-gold/10 hover:bg-mystic-gold/20 hover:border-mystic-gold transition-all duration-300 shadow-mystic-glow">
-                        <i class="fa-solid fa-user-shield mr-2"></i>Área do Professor
+                    <a href="{{ url_for('login') }}" class="inline-flex items-center px-4 py-2 border border-mystic-gold/40 text-xs font-semibold uppercase tracking-wider rounded-lg text-mystic-gold bg-mystic-gold/10 hover:bg-mystic-gold/20 hover:border-mystic-gold transition-all duration-300 shadow-mystic-glow">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar
                     </a>
                 {% endif %}
             </nav>
@@ -150,11 +160,90 @@
 
     <!-- Footer -->
     <footer class="w-full border-t border-white/5 bg-space-950/40 py-6 text-center text-xs text-slate-600">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-2">
             <p class="font-cinzel tracking-widest text-slate-500 mb-1">AWÓ ORÍ • DIÁRIO ALQUÍMICO</p>
             <p>© {{ today[:4] if today else '2026' }} - Desenvolvido para Acompanhamento Iniciático</p>
+            <p class="text-[11px] text-slate-500">
+                Gostou do Portal? <button onclick="openPixModal()" class="text-mystic-gold hover:text-mystic-goldHover underline focus:outline-none">Apoie o projeto com um Pix</button.
+            </p>
         </div>
     </footer>
 
+    <!-- Pix Donation Modal -->
+    <div id="pix-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-space-950/80 backdrop-blur-sm">
+        <div class="glass-card max-w-sm w-full p-6 rounded-2xl shadow-2xl relative border border-white/10 text-center animate-fade-in">
+            <!-- Close Button -->
+            <button onclick="closePixModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-200 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <span class="text-3xl text-mystic-gold mb-3 block animate-pulse"><i class="fa-solid fa-hands-holding-child"></i></span>
+            <h3 class="text-lg font-cinzel font-bold text-slate-100 tracking-wider">Apoie o Portal Awó Orí</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Ajude a manter este espaço sagrado ativo, independente e livre de anúncios. Toda contribuição é bem-vinda!
+            </p>
+            
+            <!-- QR Code -->
+            <div class="my-6 flex justify-center bg-white p-3 rounded-xl max-w-[180px] mx-auto shadow-inner">
+                <img id="pix-qr-code" src="{{ pix_qr_url }}" alt="Pix QR Code" class="w-full h-auto">
+            </div>
+            
+            <!-- Pix Chave / Copia e Cola -->
+            <div class="space-y-3">
+                <div class="bg-space-950/80 border border-white/5 rounded-lg p-2.5 flex items-center justify-between gap-2 text-left">
+                    <div class="truncate">
+                        <span class="text-[9px] text-slate-500 uppercase tracking-widest block font-mono">Chave Pix</span>
+                        <span id="pix-key-text" class="text-xs font-semibold text-slate-300 font-mono select-all truncate block max-w-[200px]">{{ pix_key }}</span>
+                    </div>
+                    <button onclick="copyPixCopiaCola()" class="text-slate-400 hover:text-mystic-gold transition-colors p-1 flex-shrink-0" title="Copiar Chave/Código">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+                
+                <button onclick="copyPixCopiaCola()" class="w-full py-2.5 bg-mystic-gold text-space-950 font-bold uppercase tracking-wider text-xs rounded-lg hover:bg-mystic-goldHover transition-colors shadow-mystic-glow flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-copy"></i> Copiar Código Pix
+                </button>
+                <div id="copy-feedback" class="text-[10px] text-emerald-400 font-semibold hidden justify-center items-center gap-1">
+                    <i class="fa-solid fa-check"></i> Chave Copiada!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openPixModal() {
+            document.getElementById('pix-modal').classList.remove('hidden');
+        }
+        
+        function closePixModal() {
+            document.getElementById('pix-modal').classList.add('hidden');
+            document.getElementById('copy-feedback').classList.add('hidden');
+        }
+        
+        function copyPixCopiaCola() {
+            const copiaCola = "{{ pix_copia_cola }}";
+            const pixKey = "{{ pix_key }}";
+            const textToCopy = copiaCola ? copiaCola : pixKey;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const feedback = document.getElementById('copy-feedback');
+                feedback.classList.remove('hidden');
+                feedback.classList.add('flex');
+                setTimeout(() => {
+                    feedback.classList.add('hidden');
+                    feedback.classList.remove('flex');
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+        
+        // Close modal on click outside content
+        document.getElementById('pix-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePixModal();
+            }
+        });
+    </script>
 </body>
 </html>
