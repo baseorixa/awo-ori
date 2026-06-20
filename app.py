@@ -317,12 +317,64 @@ def require_login():
         if request.endpoint and request.endpoint not in allowed_endpoints:
             return redirect(url_for('login'))
 
+def calculate_crc16(payload):
+    """Calculates CRC16 CCITT (used for Pix BR Code verification)."""
+    crc = 0xFFFF
+    for char in payload:
+        crc ^= ord(char) << 8
+        for _ in range(8):
+            if crc & 0x8000:
+                crc = (crc << 1) ^ 0x1021
+            else:
+                crc = crc << 1
+            crc &= 0xFFFF
+    return f"{crc:04X}"
+
+def generate_pix_payload(pix_key, name="Ricardo", city="SAO PAULO"):
+    """Generates a valid static EMV BR Code (Pix Payload) from a Pix Key."""
+    import unicodedata
+    def clean_string(s, max_len):
+        # Remove accents
+        s = ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+        # Keep only alphanumeric and spaces
+        s = ''.join(c for c in s if c.isalnum() or c == ' ')
+        s = s.upper().strip()
+        return s[:max_len]
+
+    clean_name = clean_string(name, 25)
+    clean_city = clean_string(city, 15)
+    
+    # Tag 26: Merchant Account Information
+    gui_part = "0014br.gov.bcb.pix"
+    key_part = f"01{len(pix_key):02d}{pix_key}"
+    merchant_info = f"26{len(gui_part + key_part):02d}{gui_part}{key_part}"
+    
+    f52 = "52040000"  # Merchant Category Code
+    f53 = "5303986"   # Transaction Currency (986 = Real)
+    f58 = "5802BR"    # Country Code
+    f59 = f"59{len(clean_name):02d}{clean_name}"
+    f60 = f"60{len(clean_city):02d}{clean_city}"
+    f62 = "62070503***"  # Additional Data Field Template (Reference label)
+    
+    base_payload = f"000201{merchant_info}{f52}{f53}{f58}{f59}{f60}{f62}6304"
+    crc = calculate_crc16(base_payload)
+    return base_payload + crc
+
 @app.context_processor
 def inject_global_vars():
     """Injects Pix donation details globally into all template contexts."""
     pix_key = os.environ.get('PIX_KEY', 'seu-email-ou-chave-pix@provedor.com')
     pix_copia_cola = os.environ.get('PIX_COPIA_COLA', '')
+    pix_name = os.environ.get('PIX_NAME', 'Ricardo')
+    pix_city = os.environ.get('PIX_CITY', 'SAO PAULO')
     
+    # Dynamically generate the Copia e Cola payload if not configured
+    if not pix_copia_cola and pix_key and pix_key != 'seu-email-ou-chave-pix@provedor.com':
+        try:
+            pix_copia_cola = generate_pix_payload(pix_key, name=pix_name, city=pix_city)
+        except Exception as e:
+            print(f"Error generating Pix payload: {e}")
+            
     # Generate dynamic QR Code URL
     qr_data = pix_copia_cola if pix_copia_cola else f"pix:{pix_key}"
     encoded_qr_data = urllib.parse.quote(qr_data)
