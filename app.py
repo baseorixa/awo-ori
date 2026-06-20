@@ -363,10 +363,16 @@ def generate_pix_payload(pix_key, name="Ricardo", city="SAO PAULO"):
 @app.context_processor
 def inject_global_vars():
     """Injects Pix donation details globally into all template contexts."""
-    pix_key = os.environ.get('PIX_KEY', 'seu-email-ou-chave-pix@provedor.com')
+    # Default to user's credentials if not set in environment variables
+    pix_key = os.environ.get('PIX_KEY', '2198079125')
     pix_copia_cola = os.environ.get('PIX_COPIA_COLA', '')
     pix_name = os.environ.get('PIX_NAME', 'Ricardo')
-    pix_city = os.environ.get('PIX_CITY', 'SAO PAULO')
+    pix_city = os.environ.get('PIX_CITY', 'RIO DE JANEIRO')
+    
+    # Auto-format Brazilian phone keys (10 or 11 digits, numeric) to include country code +55
+    # This is required by the Central Bank specification for phone number keys.
+    if pix_key.isdigit() and len(pix_key) in [10, 11]:
+        pix_key = f"+55{pix_key}"
     
     # Dynamically generate the Copia e Cola payload if not configured
     if not pix_copia_cola and pix_key and pix_key != 'seu-email-ou-chave-pix@provedor.com':
