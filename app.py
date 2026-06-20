@@ -364,7 +364,7 @@ def generate_pix_payload(pix_key, name="Ricardo", city="SAO PAULO"):
 def inject_global_vars():
     """Injects Pix donation details globally into all template contexts."""
     # Default to user's credentials if not set in environment variables
-    pix_key = os.environ.get('PIX_KEY', '2198079125')
+    pix_key = os.environ.get('PIX_KEY', '21980079125')
     pix_copia_cola = os.environ.get('PIX_COPIA_COLA', '')
     pix_name = os.environ.get('PIX_NAME', 'Ricardo')
     pix_city = os.environ.get('PIX_CITY', 'RIO DE JANEIRO')
